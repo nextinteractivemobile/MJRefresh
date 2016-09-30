@@ -66,23 +66,28 @@
     }
     
     // 跳转到下一个控制器时，contentInset可能会变
-     _scrollViewOriginalInset = self.scrollView.mj_inset;
+    _scrollViewOriginalInset = self.scrollView.contentInset;
     
     // 当前的contentOffset
     CGFloat offsetY = self.scrollView.mj_offsetY;
     // 头部控件刚好出现的offsetY
     CGFloat happenOffsetY = - self.scrollViewOriginalInset.top;
     
-    // 如果是向上滚动到看不见头部控件，直接返回
-    // >= -> >
-    if (offsetY > happenOffsetY) return;
-    
     // 普通 和 即将刷新 的临界点
     CGFloat normal2pullingOffsetY = happenOffsetY - self.mj_h;
     CGFloat pullingPercent = (happenOffsetY - offsetY) / self.mj_h;
     
+    if (pullingPercent <= 0) {
+        self.alpha = 0;
+    }
+    
+    // 如果是向上滚动到看不见头部控件，直接返回
+    // >= -> >
+    if (offsetY > happenOffsetY) return;
+    
     if (self.scrollView.isDragging) { // 如果正在拖拽
         self.pullingPercent = pullingPercent;
+        self.alpha = 1;
         if (self.state == MJRefreshStateIdle && offsetY < normal2pullingOffsetY) {
             // 转为即将刷新状态
             self.state = MJRefreshStatePulling;
@@ -124,7 +129,7 @@
             }
         }];
     } else if (state == MJRefreshStateRefreshing) {
-         dispatch_async(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
             [UIView animateWithDuration:MJRefreshFastAnimationDuration animations:^{
                 CGFloat top = self.scrollViewOriginalInset.top + self.mj_h;
                 // 增加滚动区域top
@@ -136,7 +141,7 @@
             } completion:^(BOOL finished) {
                 [self executeRefreshingCallback];
             }];
-         });
+        });
     }
 }
 
